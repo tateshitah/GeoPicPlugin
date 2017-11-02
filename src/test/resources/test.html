@@ -75,48 +75,49 @@
 <meta name="wikiTemplateUrl" content='/JSPWiki/templates/default/' />
 <meta name="wikiApplicationName" content='BrainCopyWiki' />
 
-<script type="text/javascript">//<![CDATA[
-/* Localized javascript strings: LocalizedStrings[] */
-var LocalizedStrings = {
-"javascript.sbox.clone.suffix":"-New",
-"javascript.slimbox.remoteRequest":"Remote Request {0} of {1}",
-"javascript.filter.all":"( All )",
-"javascript.group.validName":"Please provide a valid name for the new Group",
-"javascript.slimbox.next":"Next&raquo;",
-"javascript.slimbox.previous":"&laquo;Previous",
-"javascript.favs.show":"Click to show Favorites",
-"javascript.slimbox.close":"Close &#215;",
-"javascript.prefs.areyousure":"Without clicking the Save User Preferences button, your changes will be lost. Are you sure you want to exit this page?",
-"javascript.edit.findandreplace.nomatch":"No match found!",
-"javascript.tip.default.title":"More...",
-"javascript.collapse":"Click to collapse",
-"javascript.slimbox.error":"<h2>Error</h2>There was a problem with your request.<br />Please try again",
-"javascript.sort.ascending":"Ascending order. Click to reverse sort order",
-"javascript.sectionediting.label":"Section Overview",
-"javascript.edit.areyousure":"Without clicking the Save button, your changes will be lost. Are you sure you want to exit this page?",
-"javascript.edit.toolbar.makeSelection":"Please make first a selection.",
-"javascript.category.title":"Click to show category [{0}] ...",
-"javascript.slimbox.info":"Image {0} of {1}",
-"javascript.slimbox.directLink":"Direct Link to the target",
-"javascript.quick.edit.title":"Edit section {0}...",
-"javascript.filter.hint":"Enter filter pattern",
-"javascript.favs.hide":"Click to hide Favorites",
-"javascript.slimbox.btn":"Click to view {0} ",
-"javascript.sort.click":"Click to sort",
-"javascript.edit.startOfPage":"( Start of page )",
-"javascript.quick.edit":"[Edit]",
-"javascript.slimbox.caption":"Direct link to {0}",
-"javascript.edit.resize":"Drag to resize the text area",
-"javascript.edit.allsections":"( All )",
-"javascript.sort.descending":"Descending order. Click to reverse sort order",
-"javascript.slimbox.close.title":"Close [Esc]",
-"javascript.expand":"Click to expand"
-};
+<script type="text/javascript">
+	//<![CDATA[
+	/* Localized javascript strings: LocalizedStrings[] */
+	var LocalizedStrings = {
+		"javascript.sbox.clone.suffix" : "-New",
+		"javascript.slimbox.remoteRequest" : "Remote Request {0} of {1}",
+		"javascript.filter.all" : "( All )",
+		"javascript.group.validName" : "Please provide a valid name for the new Group",
+		"javascript.slimbox.next" : "Next&raquo;",
+		"javascript.slimbox.previous" : "&laquo;Previous",
+		"javascript.favs.show" : "Click to show Favorites",
+		"javascript.slimbox.close" : "Close &#215;",
+		"javascript.prefs.areyousure" : "Without clicking the Save User Preferences button, your changes will be lost. Are you sure you want to exit this page?",
+		"javascript.edit.findandreplace.nomatch" : "No match found!",
+		"javascript.tip.default.title" : "More...",
+		"javascript.collapse" : "Click to collapse",
+		"javascript.slimbox.error" : "<h2>Error</h2>There was a problem with your request.<br />Please try again",
+		"javascript.sort.ascending" : "Ascending order. Click to reverse sort order",
+		"javascript.sectionediting.label" : "Section Overview",
+		"javascript.edit.areyousure" : "Without clicking the Save button, your changes will be lost. Are you sure you want to exit this page?",
+		"javascript.edit.toolbar.makeSelection" : "Please make first a selection.",
+		"javascript.category.title" : "Click to show category [{0}] ...",
+		"javascript.slimbox.info" : "Image {0} of {1}",
+		"javascript.slimbox.directLink" : "Direct Link to the target",
+		"javascript.quick.edit.title" : "Edit section {0}...",
+		"javascript.filter.hint" : "Enter filter pattern",
+		"javascript.favs.hide" : "Click to hide Favorites",
+		"javascript.slimbox.btn" : "Click to view {0} ",
+		"javascript.sort.click" : "Click to sort",
+		"javascript.edit.startOfPage" : "( Start of page )",
+		"javascript.quick.edit" : "[Edit]",
+		"javascript.slimbox.caption" : "Direct link to {0}",
+		"javascript.edit.resize" : "Drag to resize the text area",
+		"javascript.edit.allsections" : "( All )",
+		"javascript.sort.descending" : "Descending order. Click to reverse sort order",
+		"javascript.slimbox.close.title" : "Close [Esc]",
+		"javascript.expand" : "Click to expand"
+	};
 
+	/* INCLUDERESOURCES (jsfunction) */
 
-/* INCLUDERESOURCES (jsfunction) */
-
-//]]></script>
+	//]]>
+</script>
 
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
 <link rel="search" href="/JSPWiki/Wiki.jsp?page=Search"
@@ -360,37 +361,47 @@ var LocalizedStrings = {
 							<a class="wikipage" href="/JSPWiki/Wiki.jsp?page=Test%20Plugin">Test
 								Plugin</a>
 						</p>
-						<p>
-							<label for="parent_page">Select parent page</label> <select
-								id="parent_page" name="parent_page">
-								<option value="Travel" selected>Travel</option>
-								<option value="国内旅行">国内旅行</option>
-							</select>
-						</p>
-						<p>
-							<label for="attachfilename">Select file:</label> <input
-								type="file" name="content" id="attachfilename" size="60" />
-						</p>
-						<p>
-							<label for="location">Location:</label> <input type="text"
-								name="location" id="location" size="40" />
+
+
+						<form action="http://localhost:9627/personal/helloworld"
+							method="post">
+
+							<p>
+								<label for="parent_page">Select parent page</label> <select
+									id="parent_page" name="parent_page">
+									<option value="Travel" selected>Travel</option>
+									<option value="国内旅行">国内旅行</option>
+								</select>
+							</p>
+							<p>
+								<label for="attachfilename">Select file:</label> <input
+									type="file" name="content" id="attachfilename" size="60" />
+							</p>
+							<p>
+								<label for="location">Location:</label> <input type="text"
+									name="location" id="location" size="40" />
 								<button onclick="getLocation()">Get Location</button>
-						</p>
-						<script>
-						
-						function getLocation() {
-  if(navigator.geolocation){
-    navigator.geolocation.watchPosition(update);
-  }
-}
+							</p>
+							<script>
+								function getLocation() {
+									if (navigator.geolocation) {
+										navigator.geolocation
+												.watchPosition(update);
+									}
+								}
 
-function update(position){
-  var lat = position.coords.latitude;
-  var lng = position.coords.longitude;
-  document.getElementById('location').value=lat+', '+lng;
-}
-</script>
-
+								function update(position) {
+									var lat = position.coords.latitude;
+									var lng = position.coords.longitude;
+									document.getElementById('location').value = lat
+											+ ', ' + lng;
+								}
+							</script>
+							<p>
+								<input type="submit" value="Upload">
+								<input type="reset" value="Reset">
+							</p>
+						</form>
 
 
 
