@@ -232,10 +232,14 @@ public class GeoPicServlet extends AttachmentServlet {
 			throws ProviderException {
 		WikiPage page = m_engine.getPage(name);
 		String content = m_engine.getPureText(page);
+		String[] contentSeparatedArray = content.split("!!!Reference");
 		PageManager manager = m_engine.getPageManager();
-		content += "\n*Place\n";
-		content += "[{OSM lat='" + lat + "' lon='" + lon + "'}]\n";
-		content += "*Pic\n[{Image src='" + filename + "' width='300' }]\n";
+		contentSeparatedArray[0] += "\n" + description + "\n";
+		contentSeparatedArray[0] += "\n*Place\n";
+		contentSeparatedArray[0] += "[{OSM lat='" + lat + "' lon='" + lon + "'}]\n";
+		contentSeparatedArray[0] += "*Pic\n[{Image src='" + filename + "' width='300' }]\n";
+
+		content = contentSeparatedArray[0] + "!!!Reference\n" + contentSeparatedArray[1];
 
 		manager.putPageText(page, content);
 		return name;
