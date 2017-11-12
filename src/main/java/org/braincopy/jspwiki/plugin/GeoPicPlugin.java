@@ -68,9 +68,9 @@ public class GeoPicPlugin implements WikiPlugin {
 		// result += "\t<input type=\"text\" name=\"location\" id=\"location\"
 		// size=\"40\" /><br/>\n";
 		result += "\t<label for=\"lat\">Latitude:</label>\n";
-		result += "\t<input type=\"number\" name=\"lat\" id=\"lat\" size=\"15\" min=\"-90.0\" max=\"90.0\" step=\"0.0000000001\" required />\n";
+		result += "\t<input type=\"number\" name=\"lat\" id=\"lat\" size=\"15\" min=\"-90.0\" max=\"90.0\" step=\"0.0000000001\" />\n";
 		result += "\t<label for=\"lon\">Longitude:</label>\n";
-		result += "\t<input type=\"number\" name=\"lon\" id=\"lon\" size=\"15\" min=\"-180.0\" max=\"180.0\" step=\"0.0000000001\" required />\n";
+		result += "\t<input type=\"number\" name=\"lon\" id=\"lon\" size=\"15\" min=\"-180.0\" max=\"180.0\" step=\"0.0000000001\" />\n";
 		result += "\t<button type=\"button\" onclick=\"getLocation()\">Get Location</button>\n";
 		result += "\t</p>\n\t<script>\n";
 		result += "\tfunction getLocation() {\n";
@@ -80,8 +80,6 @@ public class GeoPicPlugin implements WikiPlugin {
 		result += "\tfunction update(position) {\n";
 		result += "\t\tvar lat = position.coords.latitude;\n";
 		result += "\t\tvar lng = position.coords.longitude;\n";
-		// result += "\t\tdocument.getElementById('location').value = lat + ', ' +
-		// lng;\n";
 		result += "\t\tdocument.getElementById('lat').value = lat;\n";
 		result += "\t\tdocument.getElementById('lon').value = lng;}\n";
 		result += "\t</script>\n";
@@ -89,12 +87,10 @@ public class GeoPicPlugin implements WikiPlugin {
 		result += "\t<textarea name=\"description\" id=\"description\" rows=\"3\" cols=\"60\" ></textarea></p>\n";
 		result += "\t<p>\n\t<input type=\"submit\" value=\"Upload\">\n";
 		result += "\t<input type=\"reset\" value=\"Reset\">\n\t</p>\n";
+		result += "\t<input type=\"hidden\" name=\"page\" value=\"";
+		result += context.getName() + "\" />\n";
 
 		result += "</form>\n";
-
-		// for Debug
-		// WikiEngine engine = context.getEngine();
-		// result += engine.getWorkDir() + ": " + engine.toString();
 
 		return result;
 	}

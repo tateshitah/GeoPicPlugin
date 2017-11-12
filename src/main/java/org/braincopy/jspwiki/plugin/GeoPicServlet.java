@@ -3,6 +3,7 @@ package org.braincopy.jspwiki.plugin;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URLEncoder;
+import java.security.Permission;
 import java.util.List;
 
 import javax.servlet.ServletConfig;
@@ -25,6 +26,8 @@ import org.apache.wiki.WikiPage;
 import org.apache.wiki.api.exceptions.ProviderException;
 import org.apache.wiki.api.exceptions.RedirectException;
 import org.apache.wiki.attachment.AttachmentServlet;
+import org.apache.wiki.auth.AuthorizationManager;
+import org.apache.wiki.auth.permissions.PermissionFactory;
 import org.apache.wiki.ui.progress.ProgressItem;
 import org.apache.wiki.util.TextUtil;
 
@@ -64,12 +67,14 @@ public class GeoPicServlet extends AttachmentServlet {
 	 */
 	@Override
 	protected String upload(HttpServletRequest req) throws RedirectException, IOException {
+
+		/////
 		String msg = "";
 		String attName = "(unknown)";
-		String errorPage = m_engine.getURL(WikiContext.ERROR, "", null, false); // If something bad happened, Upload
-																				// should be able to take care of
-																				// most stuff
 
+		// If something bad happened, Upload should be able to take care of most
+		// stuff
+		String errorPage = m_engine.getURL(WikiContext.ERROR, "", null, false);
 		String nextPage = errorPage;
 
 		String progressId = req.getParameter("progressid");
@@ -105,7 +110,7 @@ public class GeoPicServlet extends AttachmentServlet {
 			///// added by Hiroaki Tateshita
 			String name = null;
 			String parent = null;
-			// String locationStr = null;
+			String temp = null;
 			float lat = Float.MAX_VALUE;
 			float lon = Float.MAX_VALUE;
 			String description = null;
@@ -115,7 +120,8 @@ public class GeoPicServlet extends AttachmentServlet {
 				if (item.isFormField()) {
 					if (item.getFieldName().equals("page")) {
 						//
-						// FIXME: Kludge alert. We must end up with the parent page name,
+						// FIXME: Kludge alert. We must end up with the parent
+						// page name,
 						// if this is an upload of a new revision
 						//
 
@@ -145,16 +151,16 @@ public class GeoPicServlet extends AttachmentServlet {
 							throw new RedirectException("Wrong parent page name", errorPage);
 						}
 
-						/*
-						 * else if (item.getFieldName().equals("location")) { locationStr =
-						 * item.getString("UTF-8"); if (locationStr.contains(",")) {
-						 * 
-						 * } else { throw new RedirectException("Wrong location", errorPage); } }
-						 */
 					} else if (item.getFieldName().equals("lat")) {
-						lat = Float.parseFloat(item.getString("UTF-8"));
+						temp = item.getString("UTF-8");
+						if (!temp.equals("")) {
+							lat = Float.parseFloat(temp);
+						}
 					} else if (item.getFieldName().equals("lon")) {
-						lon = Float.parseFloat(item.getString("UTF-8"));
+						temp = item.getString("UTF-8");
+						if (!temp.equals("")) {
+							lon = Float.parseFloat(temp);
+						}
 					} else if (item.getFieldName().equals("description")) {
 						description = item.getString("UTF-8");
 					} /////
@@ -168,21 +174,40 @@ public class GeoPicServlet extends AttachmentServlet {
 				throw new RedirectException("Broken file upload", errorPage);
 
 			//
-			// FIXME: Unfortunately, with Apache fileupload we will get the form fields in
-			// order. This means that we have to gather all the metadata from the
+			// FIXME: Unfortunately, with Apache fileupload we will get the form
+			// fields in
+			// order. This means that we have to gather all the metadata from
+			// the
 			// request prior to actually touching the uploaded file itself. This
-			// is because the changenote appears after the file upload box, and we
+			// is because the changenote appears after the file upload box, and
+			// we
 			// would not have this information when uploading. This also means
-			// that with current structure we can only support a single file upload
+			// that with current structure we can only support a single file
+			// upload
 			// at a time.
 			//
 			String filename = actualFile.getName();
 
 			///// added by Hiroaki Tateshita
+
+			AuthorizationManager authmgr = m_engine.getAuthorizationManager();
 			if (m_engine.pageExists(name)) {
-				wikipage = addInfo(name, description, lat, lon, filename);
+				Permission permission = PermissionFactory.getPagePermission(m_engine.getPage(name), "modify");
+				if (!authmgr.checkPermission(context.getWikiSession(), permission)) {
+					log.debug("User does not have permission for this");
+					return "Wiki.jsp?page=" + URLEncoder.encode(wikipage, "UTF-8");
+				} else {
+					wikipage = addInfo(name, description, lat, lon, filename);
+				}
 			} else {
-				wikipage = createNewPage(name, parent, description, lat, lon, filename);
+				WikiPage page = new WikiPage(m_engine, name);
+				Permission permission = PermissionFactory.getPagePermission(page, "edit");
+				if (!authmgr.checkPermission(context.getWikiSession(), permission)) {
+					log.debug("User does not have permission for this");
+					return "Wiki.jsp?page=" + URLEncoder.encode(wikipage, "UTF-8");
+				} else {
+					wikipage = editNewPage(page, parent, description, lat, lon, filename);
+				}
 			}
 			/////
 
@@ -190,10 +215,12 @@ public class GeoPicServlet extends AttachmentServlet {
 			InputStream in = actualFile.getInputStream();
 
 			try {
+
 				executeUpload(context, in, filename, nextPage, wikipage, changeNote, fileSize);
 				///// added by Hiroaki Tateshita
 				nextPage = "Wiki.jsp?page=" + URLEncoder.encode(wikipage, "UTF-8");
 				/////
+
 			} finally {
 				IOUtils.closeQuietly(in);
 			}
@@ -235,11 +262,12 @@ public class GeoPicServlet extends AttachmentServlet {
 		String[] contentSeparatedArray = content.split("!!!Reference");
 		PageManager manager = m_engine.getPageManager();
 		contentSeparatedArray[0] += "\n" + description + "\n";
-		contentSeparatedArray[0] += "\n*Place\n";
-		contentSeparatedArray[0] += "[{OSM lat='" + lat + "' lon='" + lon + "'}]\n";
 		contentSeparatedArray[0] += "*Pic\n[{Image src='" + filename + "' width='300' }]\n";
 
-		content = contentSeparatedArray[0] + "!!!Reference\n" + contentSeparatedArray[1];
+		content = contentSeparatedArray[0] + "!!!Reference\n";
+		if (contentSeparatedArray.length > 1) {
+			content += contentSeparatedArray[1];
+		}
 
 		manager.putPageText(page, content);
 		return name;
@@ -257,16 +285,15 @@ public class GeoPicServlet extends AttachmentServlet {
 	 * @return the name of wikipage if no exception happens
 	 * @throws ProviderException
 	 */
-	private String createNewPage(String name, String parent, String description, float lat, float lon, String filename)
+	private String editNewPage(WikiPage page, String parent, String description, float lat, float lon, String filename)
 			throws ProviderException {
 
-		String content = createContent(name, parent, description, lat, lon, filename);
+		String content = createContent(page.getName(), parent, description, lat, lon, filename);
 
-		WikiPage page = new WikiPage(m_engine, name);
 		PageManager manager = m_engine.getPageManager();
 		manager.putPageText(page, content);
 
-		return name;
+		return page.getName();
 
 	}
 
@@ -274,61 +301,15 @@ public class GeoPicServlet extends AttachmentServlet {
 			String filename) {
 		String result = "[" + parent + "]" + System.lineSeparator() + "!!!Abstract" + System.lineSeparator();
 		result += description + System.lineSeparator();
-		result += "!!!Topics\n*Place" + System.lineSeparator();
-		result += lat + ", " + lon + System.lineSeparator();
-		result += "[{OSM lat='" + lat + "' lon='" + lon + "'}]" + System.lineSeparator();
+		result += "!!!Topics\n" + System.lineSeparator();
+		if (lat < 90.0 || lon < 180.0) {
+			result += "*Place\n" + lat + ", " + lon + System.lineSeparator();
+			result += "[{OSM lat='" + lat + "' lon='" + lon + "'}]" + System.lineSeparator();
+		}
 		result += "*Pic\n[{Image src='" + filename + "' width='300' }]" + System.lineSeparator();
 		result += "!!!Reference";
 		return result;
 	}
-
-	/*
-	 * 
-	 * public void doPost(HttpServletRequest request, HttpServletResponse response)
-	 * throws IOException, ServletException {
-	 * 
-	 * response.setContentType("text/html; charset=UTF-8"); // PrintWriter out =
-	 * response.getWriter();
-	 * 
-	 * FileItemFactory factory = new DiskFileItemFactory();
-	 * 
-	 * ServletFileUpload upload = new ServletFileUpload(factory);
-	 * upload.setHeaderEncoding("UTF-8"); String name = null; String parent = null;
-	 * String locationStr = null; String description = null;
-	 * 
-	 * try { List<FileItem> items = upload.parseRequest(request); for (FileItem item
-	 * : items) { if (item.isFormField()) { if (item.getFieldName().equals("name"))
-	 * { name = item.getString("UTF-8"); } else if
-	 * (item.getFieldName().equals("parent_page")) { parent =
-	 * item.getString("UTF-8"); } else if (item.getFieldName().equals("location")) {
-	 * locationStr = item.getString("UTF-8"); } else if
-	 * (item.getFieldName().equals("description")) { description =
-	 * item.getString("UTF-8"); } } } } catch (FileUploadException e1) { //
-	 * out.println(e1.getMessage()); e1.printStackTrace(); } if (name != null &&
-	 * parent != null && locationStr != null) { if
-	 * (ServletFileUpload.isMultipartContent(request)) { // out.println(name +
-	 * "<br>" + parent + "<br>" + locationStr + "<br>" + "it // should be file
-	 * upload<br>"); WikiPage page = new WikiPage(m_engine, name); PageManager
-	 * manager = m_engine.getPageManager();
-	 * 
-	 * String content = "[" + parent + "]\n!!!Abstract\n"; content += description +
-	 * "\n"; content += "!!!Topics\n*Place\n"; content += locationStr.trim() + "\n";
-	 * content += "[{OSM lat='" + locationStr.split(",")[0] + "' lon='" +
-	 * locationStr.split(",")[1].trim() + "'}]\n"; content +=
-	 * "*Pic\n[{Image src='***.png' width='300' }]\n"; content += "!!!Reference";
-	 * try { manager.putPageText(page, content); } catch (ProviderException e) { //
-	 * out.append(e.getLocalizedMessage()); e.printStackTrace(); } } else { //
-	 * out.println("it might be not file upload<br>"); } } else { //
-	 * out.println("name or parent or location should be set.<br>"); }
-	 * 
-	 * // out.close();
-	 * 
-	 * // String attach_url = "attach";
-	 * 
-	 * // RequestDispatcher dispatcher = request.getRequestDispatcher(attach_url);
-	 * 
-	 * // dispatcher.forward(request, response); }
-	 */
 
 	/**
 	 * Validates the next page to be on the same server as this webapp. Fixes
@@ -336,7 +317,8 @@ public class GeoPicServlet extends AttachmentServlet {
 	 */
 	private String validateNextPage(String nextPage, String errorPage) {
 		if (nextPage.indexOf("://") != -1) {
-			// It's an absolute link, so unless it starts with our address, we'll
+			// It's an absolute link, so unless it starts with our address,
+			// we'll
 			// log an error.
 
 			if (!nextPage.startsWith(m_engine.getBaseURL())) {
