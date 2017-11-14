@@ -3,7 +3,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.braincopy.jspwiki.plugin</groupId>
 	<artifactId>gp-jspwiki-plugin</artifactId>
-	<version>0.4.8</version>
+	<version>0.5.2</version>
 	<dependencies>
 		<dependency>
 			<groupId>junit</groupId>

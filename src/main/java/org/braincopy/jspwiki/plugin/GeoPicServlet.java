@@ -1,3 +1,29 @@
+/*
+
+Copyright (c) 2017 Hiroaki Tateshita
+
+Permission is hereby granted, free of charge, to any person obtaining a copy 
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell 
+copies of the Software, and to permit persons to whom the Software is furnished
+to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all 
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, 
+INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A 
+PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT 
+HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION 
+OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE 
+SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+this source code includes the work that is distributed in the Apache License 2.0
+http://www.apache.org/licenses/LICENSE-2.0
+
+ */
+
 package org.braincopy.jspwiki.plugin;
 
 import java.io.IOException;
@@ -23,11 +49,13 @@ import org.apache.wiki.PageManager;
 import org.apache.wiki.WikiContext;
 import org.apache.wiki.WikiEngine;
 import org.apache.wiki.WikiPage;
+import org.apache.wiki.api.exceptions.PluginException;
 import org.apache.wiki.api.exceptions.ProviderException;
 import org.apache.wiki.api.exceptions.RedirectException;
 import org.apache.wiki.attachment.AttachmentServlet;
 import org.apache.wiki.auth.AuthorizationManager;
 import org.apache.wiki.auth.permissions.PermissionFactory;
+import org.apache.wiki.parser.PluginContent;
 import org.apache.wiki.ui.progress.ProgressItem;
 import org.apache.wiki.util.TextUtil;
 
@@ -207,6 +235,20 @@ public class GeoPicServlet extends AttachmentServlet {
 					return "Wiki.jsp?page=" + URLEncoder.encode(wikipage, "UTF-8");
 				} else {
 					wikipage = editNewPage(page, parent, description, lat, lon, filename);
+					if (m_engine.pageExists(parent)) {
+						WikiPage parent_page = m_engine.getPage(parent);
+						String content = m_engine.getPureText(parent_page);
+						String pluginText = content.substring(content.indexOf("[{OSM"));
+						pluginText = pluginText.substring(0, pluginText.indexOf("}]") + 3);
+						PluginContent pluginContent = PluginContent.parsePluginLine(context, pluginText, 0);
+						if (pluginContent.getParameter("pages") != null) {
+							String pages = pluginContent.getParameter("pages");
+							String[] tempStrArray = content.split(pages);
+							PageManager manager = m_engine.getPageManager();
+							tempStrArray[0] += pages + "/" + name + tempStrArray[1];
+							manager.putPageText(parent_page, tempStrArray[0]);
+						}
+					}
 				}
 			}
 			/////
@@ -246,6 +288,9 @@ public class GeoPicServlet extends AttachmentServlet {
 			log.warn(msg + " (attachment: " + attName + ")", e);
 
 			throw new IOException(msg, e);
+		} catch (PluginException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		} finally {
 			m_engine.getProgressManager().stopProgress(progressId);
 			// FIXME: In case of exceptions should absolutely

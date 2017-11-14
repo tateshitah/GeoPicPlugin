@@ -19,6 +19,9 @@ HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTIO
 OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE 
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
+this source code includes the work that is distributed in the Apache License 2.0
+http://www.apache.org/licenses/LICENSE-2.0
+
  */
 
 package org.braincopy.jspwiki.plugin;
