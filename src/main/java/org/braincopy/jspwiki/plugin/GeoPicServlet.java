@@ -43,6 +43,12 @@ import org.apache.commons.fileupload.FileUploadException;
 import org.apache.commons.fileupload.ProgressListener;
 import org.apache.commons.fileupload.disk.DiskFileItemFactory;
 import org.apache.commons.fileupload.servlet.ServletFileUpload;
+import org.apache.commons.imaging.ImageReadException;
+import org.apache.commons.imaging.Imaging;
+import org.apache.commons.imaging.common.ImageMetadata;
+import org.apache.commons.imaging.formats.jpeg.JpegImageMetadata;
+import org.apache.commons.imaging.formats.tiff.TiffImageMetadata;
+import org.apache.commons.imaging.formats.tiff.TiffImageMetadata.GPSInfo;
 import org.apache.commons.io.IOUtils;
 import org.apache.log4j.Logger;
 import org.apache.wiki.PageManager;
@@ -52,6 +58,8 @@ import org.apache.wiki.WikiPage;
 import org.apache.wiki.api.exceptions.PluginException;
 import org.apache.wiki.api.exceptions.ProviderException;
 import org.apache.wiki.api.exceptions.RedirectException;
+import org.apache.wiki.attachment.Attachment;
+import org.apache.wiki.attachment.AttachmentManager;
 import org.apache.wiki.attachment.AttachmentServlet;
 import org.apache.wiki.auth.AuthorizationManager;
 import org.apache.wiki.auth.permissions.PermissionFactory;
@@ -270,13 +278,19 @@ public class GeoPicServlet extends AttachmentServlet {
 
 				///// added by Hiroaki Tateshita
 
+				AttachmentManager attachManager = m_engine.getAttachmentManager();
+				Attachment attachment = attachManager.getAttachmentInfo(filename);
+
 				if (useExif) {
-					updateLocationByExif();
+					updateLocationByExif(attachManager.getAttachmentStream(attachment), filename, wikipage);
 				}
 
 				nextPage = "Wiki.jsp?page=" + URLEncoder.encode(wikipage, "UTF-8");
 				/////
 
+			} catch (ImageReadException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
 			} finally {
 				IOUtils.closeQuietly(in);
 			}
@@ -314,9 +328,30 @@ public class GeoPicServlet extends AttachmentServlet {
 		return nextPage;
 	}
 
-	private void updateLocationByExif() {
-		// TODO Auto-generated method stub
+	private void updateLocationByExif(InputStream is, String filename, String name)
+			throws ImageReadException, IOException {
+		ImageMetadata metadata = Imaging.getMetadata(is, filename);
+		if (metadata instanceof JpegImageMetadata) {
+			JpegImageMetadata jpegMetadata = (JpegImageMetadata) metadata;
+			TiffImageMetadata exif = jpegMetadata.getExif();
+			if (exif != null) {
+				GPSInfo gpsinfo = exif.getGPS();
 
+				if (gpsinfo != null) {
+					float lat = (float) gpsinfo.getLatitudeAsDegreesNorth();
+					float lon = (float) gpsinfo.getLongitudeAsDegreesEast();
+					addLocationInfo(lat, lon, name);
+				}
+			}
+		}
+	}
+
+	private void addLocationInfo(float lat, float lon, String name) {
+		WikiPage page = m_engine.getPage(name);
+		String content = m_engine.getPureText(page);
+		if (!content.contains("[{OSM")) {
+
+		}
 	}
 
 	private String addInfo(String name, String description, float lat, float lon, String filename)
