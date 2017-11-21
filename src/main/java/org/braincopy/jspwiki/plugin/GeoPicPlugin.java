@@ -67,9 +67,11 @@ public class GeoPicPlugin implements WikiPlugin {
 		result += "\t<p>\n\t<label for=\"attachfilename\">Select file:</label>\n";
 		result += "\t<input type=\"file\" name=\"content\" id=\"attachfilename\" size=\"60\" required />\n";
 		result += "\t</p>\n\t<p>";
-		// result += "\t<label for=\"location\">Location:</label>\n";
-		// result += "\t<input type=\"text\" name=\"location\" id=\"location\"
-		// size=\"40\" /><br/>\n";
+
+		result += "\t<p><label for=\"useExif\">Use Exif:</label> \n";
+		result += "\t<input type=\"checkbox\" name=\"useExif\" id=\"useExif\" value=\"1\"";
+		result += "onclick=\"setEditEnable(this.checked)\" > I use Exif</p>\n";
+
 		result += "\t<label for=\"lat\">Latitude:</label>\n";
 		result += "\t<input type=\"number\" name=\"lat\" id=\"lat\" size=\"15\" min=\"-90.0\" max=\"90.0\" step=\"0.0000000001\" />\n";
 		result += "\t<label for=\"lon\">Longitude:</label>\n";
@@ -79,7 +81,6 @@ public class GeoPicPlugin implements WikiPlugin {
 		result += "\tfunction getLocation() {\n";
 		result += "\t\tif (navigator.geolocation) {\n";
 		result += "\t\t\tnavigator.geolocation.watchPosition(update);}}\n";
-
 		result += "\tfunction update(position) {\n";
 		result += "\t\tvar lat = position.coords.latitude;\n";
 		result += "\t\tvar lng = position.coords.longitude;\n";
@@ -92,6 +93,14 @@ public class GeoPicPlugin implements WikiPlugin {
 		result += "\t<input type=\"reset\" value=\"Reset\">\n\t</p>\n";
 		result += "\t<input type=\"hidden\" name=\"page\" value=\"";
 		result += context.getName() + "\" />\n";
+		result += "\t</p>\n\t<script>\n";
+		result += "\tfunction setEditEnable(boolEnable){\n";
+		result += "\t\tvar lat_elm = document.getElementById('lat');\n";
+		result += "\t\tlat_elm.disabled = boolEnable;\n";
+		result += "\t\tvar lon_elm = document.getElementById('lon');\n";
+		result += "\t\tlon_elm.disabled = boolEnable;\n";
+		result += "\t}\n";
+		result += "\t</script>\n";
 
 		result += "</form>\n";
 

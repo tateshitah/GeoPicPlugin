@@ -142,6 +142,7 @@ public class GeoPicServlet extends AttachmentServlet {
 			float lat = Float.MAX_VALUE;
 			float lon = Float.MAX_VALUE;
 			String description = null;
+			boolean useExif = false;
 			/////
 
 			for (FileItem item : items) {
@@ -179,14 +180,21 @@ public class GeoPicServlet extends AttachmentServlet {
 							throw new RedirectException("Wrong parent page name", errorPage);
 						}
 
-					} else if (item.getFieldName().equals("lat")) {
+					} else if (item.getFieldName().equals("useExif")) {
 						temp = item.getString("UTF-8");
-						if (!temp.equals("")) {
+						if (temp.equals("1")) {
+							useExif = true;
+						}
+
+					} else if (item.getFieldName().equals("lat")) {
+
+						temp = item.getString("UTF-8");
+						if (!temp.equals("") && !useExif) {
 							lat = Float.parseFloat(temp);
 						}
 					} else if (item.getFieldName().equals("lon")) {
 						temp = item.getString("UTF-8");
-						if (!temp.equals("")) {
+						if (!temp.equals("") && !useExif) {
 							lon = Float.parseFloat(temp);
 						}
 					} else if (item.getFieldName().equals("description")) {
@@ -216,50 +224,56 @@ public class GeoPicServlet extends AttachmentServlet {
 			//
 			String filename = actualFile.getName();
 
-			///// added by Hiroaki Tateshita
-
-			AuthorizationManager authmgr = m_engine.getAuthorizationManager();
-			if (m_engine.pageExists(name)) {
-				Permission permission = PermissionFactory.getPagePermission(m_engine.getPage(name), "modify");
-				if (!authmgr.checkPermission(context.getWikiSession(), permission)) {
-					log.debug("User does not have permission for this");
-					return "Wiki.jsp?page=" + URLEncoder.encode(wikipage, "UTF-8");
-				} else {
-					wikipage = addInfo(name, description, lat, lon, filename);
-				}
-			} else {
-				WikiPage page = new WikiPage(m_engine, name);
-				Permission permission = PermissionFactory.getPagePermission(page, "edit");
-				if (!authmgr.checkPermission(context.getWikiSession(), permission)) {
-					log.debug("User does not have permission for this");
-					return "Wiki.jsp?page=" + URLEncoder.encode(wikipage, "UTF-8");
-				} else {
-					wikipage = editNewPage(page, parent, description, lat, lon, filename);
-					if (m_engine.pageExists(parent)) {
-						WikiPage parent_page = m_engine.getPage(parent);
-						String content = m_engine.getPureText(parent_page);
-						String pluginText = content.substring(content.indexOf("[{OSM"));
-						pluginText = pluginText.substring(0, pluginText.indexOf("}]") + 3);
-						PluginContent pluginContent = PluginContent.parsePluginLine(context, pluginText, 0);
-						if (pluginContent.getParameter("pages") != null) {
-							String pages = pluginContent.getParameter("pages");
-							String[] tempStrArray = content.split(pages);
-							PageManager manager = m_engine.getPageManager();
-							tempStrArray[0] += pages + "/" + name + tempStrArray[1];
-							manager.putPageText(parent_page, tempStrArray[0]);
-						}
-					}
-				}
-			}
-			/////
-
 			long fileSize = actualFile.getSize();
 			InputStream in = actualFile.getInputStream();
 
 			try {
+				///// added by Hiroaki Tateshita
+
+				AuthorizationManager authmgr = m_engine.getAuthorizationManager();
+				if (m_engine.pageExists(name)) {
+					Permission permission = PermissionFactory.getPagePermission(m_engine.getPage(name), "modify");
+					if (!authmgr.checkPermission(context.getWikiSession(), permission)) {
+						log.debug("User does not have permission for this");
+						return "Wiki.jsp?page=" + URLEncoder.encode(wikipage, "UTF-8");
+					} else {
+						wikipage = addInfo(name, description, lat, lon, filename);
+					}
+				} else {
+					WikiPage page = new WikiPage(m_engine, name);
+					Permission permission = PermissionFactory.getPagePermission(page, "edit");
+					if (!authmgr.checkPermission(context.getWikiSession(), permission)) {
+						log.debug("User does not have permission for this");
+						m_engine.deletePage(name);
+						return "Wiki.jsp?page=" + URLEncoder.encode(wikipage, "UTF-8");
+					} else {
+						wikipage = editNewPage(page, parent, description, lat, lon, filename);
+						if (m_engine.pageExists(parent)) {
+							WikiPage parent_page = m_engine.getPage(parent);
+							String content = m_engine.getPureText(parent_page);
+							String pluginText = content.substring(content.indexOf("[{OSM"));
+							pluginText = pluginText.substring(0, pluginText.indexOf("}]") + 3);
+							PluginContent pluginContent = PluginContent.parsePluginLine(context, pluginText, 0);
+							if (pluginContent.getParameter("pages") != null) {
+								String pages = pluginContent.getParameter("pages");
+								String[] tempStrArray = content.split(pages);
+								PageManager manager = m_engine.getPageManager();
+								tempStrArray[0] += pages + "/" + name + tempStrArray[1];
+								manager.putPageText(parent_page, tempStrArray[0]);
+							}
+						}
+					}
+				}
+				/////
 
 				executeUpload(context, in, filename, nextPage, wikipage, changeNote, fileSize);
+
 				///// added by Hiroaki Tateshita
+
+				if (useExif) {
+					updateLocationByExif();
+				}
+
 				nextPage = "Wiki.jsp?page=" + URLEncoder.encode(wikipage, "UTF-8");
 				/////
 
@@ -298,6 +312,11 @@ public class GeoPicServlet extends AttachmentServlet {
 		}
 
 		return nextPage;
+	}
+
+	private void updateLocationByExif() {
+		// TODO Auto-generated method stub
+
 	}
 
 	private String addInfo(String name, String description, float lat, float lon, String filename)
