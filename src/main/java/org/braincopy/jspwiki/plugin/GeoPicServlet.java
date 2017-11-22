@@ -256,7 +256,8 @@ public class GeoPicServlet extends AttachmentServlet {
 						return "Wiki.jsp?page=" + URLEncoder.encode(wikipage, "UTF-8");
 					} else {
 						wikipage = editNewPage(page, parent, description, lat, lon, filename);
-						if (m_engine.pageExists(parent)) {
+
+						if (m_engine.pageExists(parent) && m_engine.getPureText(page).contains("[{OSM")) {
 							WikiPage parent_page = m_engine.getPage(parent);
 							String content = m_engine.getPureText(parent_page);
 							String pluginText = content.substring(content.indexOf("[{OSM"));
@@ -279,10 +280,11 @@ public class GeoPicServlet extends AttachmentServlet {
 				///// added by Hiroaki Tateshita
 
 				AttachmentManager attachManager = m_engine.getAttachmentManager();
-				Attachment attachment = attachManager.getAttachmentInfo(filename);
+				Attachment attachment = attachManager.getAttachmentInfo(wikipage + "/" + filename);
 
 				if (useExif) {
-					updateLocationByExif(attachManager.getAttachmentStream(attachment), filename, wikipage);
+					InputStream is = attachManager.getAttachmentStream(attachment);
+					updateLocationByExif(is, filename, wikipage);
 				}
 
 				nextPage = "Wiki.jsp?page=" + URLEncoder.encode(wikipage, "UTF-8");
@@ -328,8 +330,18 @@ public class GeoPicServlet extends AttachmentServlet {
 		return nextPage;
 	}
 
+	/**
+	 * Added by Hiroaki Tateshita
+	 * 
+	 * @param is
+	 * @param filename
+	 * @param name
+	 * @throws ImageReadException
+	 * @throws IOException
+	 * @throws ProviderException
+	 */
 	private void updateLocationByExif(InputStream is, String filename, String name)
-			throws ImageReadException, IOException {
+			throws ImageReadException, IOException, ProviderException {
 		ImageMetadata metadata = Imaging.getMetadata(is, filename);
 		if (metadata instanceof JpegImageMetadata) {
 			JpegImageMetadata jpegMetadata = (JpegImageMetadata) metadata;
@@ -346,10 +358,16 @@ public class GeoPicServlet extends AttachmentServlet {
 		}
 	}
 
-	private void addLocationInfo(float lat, float lon, String name) {
+	private void addLocationInfo(float lat, float lon, String name) throws ProviderException {
 		WikiPage page = m_engine.getPage(name);
 		String content = m_engine.getPureText(page);
 		if (!content.contains("[{OSM")) {
+			String[] tempStrArray = content.split("\\*Pic");
+			content = tempStrArray[0] + "\n*Place\n" + lat + ", " + lon + System.lineSeparator();
+			content += "[{OSM lat='" + lat + "' lon='" + lon + "'}]\n" + System.lineSeparator();
+			content += "*Pic" + tempStrArray[1];
+			PageManager manager = m_engine.getPageManager();
+			manager.putPageText(page, content);
 
 		}
 	}
