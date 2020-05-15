@@ -55,6 +55,7 @@ public class GeoPicPlugin implements WikiPlugin {
 		}
 		result += "<form action=\"gpupload\" enctype=\"multipart/form-data\" method=\"post\">\n";
 
+		// select parent
 		result += "\t<p><label for=\"parent_page\">Select parent page</label>\n";
 		result += "\t<select id=\"parent_page\" name=\"parent_page\">\n";
 		result += "\t\t<option value=\"" + parentPages[0] + "\" selected>" + parentPages[0] + "</option>\n";
@@ -62,16 +63,22 @@ public class GeoPicPlugin implements WikiPlugin {
 			result += "\t\t<option value=\"" + parentPages[i] + "\">" + parentPages[i] + "</option>\n";
 		}
 		result += "\t</select>\n\t</p>\n";
+
 		result += "\t<p>\n\t<label for=\"name\">Name:</label>\n";
 		result += "\t<input type=\"text\" name=\"name\" id=\"name\" size=\"40\" required /></p>\n";
 		result += "\t<p>\n\t<label for=\"attachfilename\">Select file:</label>\n";
 		result += "\t<input type=\"file\" name=\"content\" id=\"attachfilename\" size=\"60\" required />\n";
 		result += "\t</p>\n\t<p>";
 
-		result += "\t<p><label for=\"useExif\">Use Exif:</label> \n";
+		// for EXIF
+		result += "\t<p><label for=\"useExif\">Exif:</label> \n";
 		result += "\t<input type=\"checkbox\" name=\"useExif\" id=\"useExif\" value=\"1\"";
-		result += "onclick=\"setEditEnable(this.checked)\" > I use Exif</p>\n";
+		result += "onclick=\"setEditEnable(this.checked)\" > I use Exif\n";
+		//result += "\t<input type=\"checkbox\" name=\"deleteExif\" id=\"deleteExif\" value=\"2\"";
+		//result += " > I delete Exif";
+		result += "</p>\n";
 
+		// for lat lon
 		result += "\t<label for=\"lat\">Latitude:</label>\n";
 		result += "\t<input type=\"number\" name=\"lat\" id=\"lat\" size=\"15\" min=\"-90.0\" max=\"90.0\" step=\"0.0000000001\" />\n";
 		result += "\t<label for=\"lon\">Longitude:</label>\n";
@@ -87,13 +94,18 @@ public class GeoPicPlugin implements WikiPlugin {
 		result += "\t\tdocument.getElementById('lat').value = lat;\n";
 		result += "\t\tdocument.getElementById('lon').value = lng;}\n";
 		result += "\t</script>\n";
+
+
+		// for description
 		result += "\t<p><label for=\"description\">Description:</label><br/>\n";
 		result += "\t<textarea name=\"description\" id=\"description\" rows=\"3\" cols=\"60\" ></textarea></p>\n";
 		result += "\t<p>\n\t<input type=\"submit\" value=\"Upload\">\n";
 		result += "\t<input type=\"reset\" value=\"Reset\">\n\t</p>\n";
 		result += "\t<input type=\"hidden\" name=\"page\" value=\"";
 		result += context.getName() + "\" />\n";
-		result += "\t</p>\n\t<script>\n";
+		result += "\t</p>\n";
+
+		result += "\t<script>\n";
 		result += "\tfunction setEditEnable(boolEnable){\n";
 		result += "\t\tvar lat_elm = document.getElementById('lat');\n";
 		result += "\t\tlat_elm.disabled = boolEnable;\n";
